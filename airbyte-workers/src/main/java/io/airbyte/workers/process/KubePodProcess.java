@@ -11,24 +11,7 @@ import io.airbyte.config.ResourceRequirements;
 import io.airbyte.config.TolerationPOJO;
 import io.airbyte.metrics.lib.DogStatsDMetricSingleton;
 import io.airbyte.metrics.lib.OssMetricsRegistry;
-import io.fabric8.kubernetes.api.model.Container;
-import io.fabric8.kubernetes.api.model.ContainerBuilder;
-import io.fabric8.kubernetes.api.model.ContainerPort;
-import io.fabric8.kubernetes.api.model.ContainerPortBuilder;
-import io.fabric8.kubernetes.api.model.DeletionPropagation;
-import io.fabric8.kubernetes.api.model.EnvVar;
-import io.fabric8.kubernetes.api.model.LocalObjectReference;
-import io.fabric8.kubernetes.api.model.Pod;
-import io.fabric8.kubernetes.api.model.PodBuilder;
-import io.fabric8.kubernetes.api.model.PodFluent;
-import io.fabric8.kubernetes.api.model.Quantity;
-import io.fabric8.kubernetes.api.model.ResourceRequirementsBuilder;
-import io.fabric8.kubernetes.api.model.Toleration;
-import io.fabric8.kubernetes.api.model.TolerationBuilder;
-import io.fabric8.kubernetes.api.model.Volume;
-import io.fabric8.kubernetes.api.model.VolumeBuilder;
-import io.fabric8.kubernetes.api.model.VolumeMount;
-import io.fabric8.kubernetes.api.model.VolumeMountBuilder;
+import io.fabric8.kubernetes.api.model.*;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.fabric8.kubernetes.client.dsl.PodResource;
 import io.fabric8.kubernetes.client.informers.SharedIndexInformer;
@@ -211,6 +194,22 @@ public class KubePodProcess extends Process implements KubePod {
     final List<EnvVar> envVars = envMap.entrySet().stream()
         .map(entry -> new EnvVar(entry.getKey(), entry.getValue(), null))
         .collect(Collectors.toList());
+
+    for (Map.Entry<String, String> envEntry : System.getenv().entrySet()) {
+      if (envEntry.getKey().startsWith("PRIMEDATA_SECRET_")) {
+        String carriedEnvKey = envEntry.getKey().substring(17);
+        String[] carriedEnvValue = envEntry.getValue().split("\\.");
+        System.out.println(carriedEnvValue);
+
+        EnvVarSource envVarSource = new EnvVarSource();
+        envVarSource.setSecretKeyRef(new SecretKeySelector(carriedEnvValue[0], carriedEnvValue[1], false));
+
+        EnvVar envVar = new EnvVar();
+        envVar.setName(carriedEnvKey);
+        envVar.setValueFrom(envVarSource);
+        envVars.add(envVar);
+      }
+    }
 
     final ContainerBuilder containerBuilder = new ContainerBuilder()
         .withName(MAIN_CONTAINER_NAME)
