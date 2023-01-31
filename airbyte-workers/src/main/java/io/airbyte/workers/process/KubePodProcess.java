@@ -202,7 +202,7 @@ public class KubePodProcess extends Process implements KubePod {
         System.out.println(carriedEnvValue);
 
         EnvVarSource envVarSource = new EnvVarSource();
-        envVarSource.setSecretKeyRef(new SecretKeySelector(carriedEnvValue[0], carriedEnvValue[1], false));
+        envVarSource.setSecretKeyRef(new SecretKeySelector(carriedEnvValue[1], carriedEnvValue[0], false));
 
         EnvVar envVar = new EnvVar();
         envVar.setName(carriedEnvKey);
