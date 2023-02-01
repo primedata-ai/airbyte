@@ -195,11 +195,11 @@ public class KubePodProcess extends Process implements KubePod {
         .map(entry -> new EnvVar(entry.getKey(), entry.getValue(), null))
         .collect(Collectors.toList());
 
+    String primeDataSecretPrefix = "PRIMEDATA_SECRET_";
     for (Map.Entry<String, String> envEntry : System.getenv().entrySet()) {
-      if (envEntry.getKey().startsWith("PRIMEDATA_SECRET_")) {
-        String carriedEnvKey = envEntry.getKey().substring(17);
+      if (envEntry.getKey().startsWith(primeDataSecretPrefix)) {
+        String carriedEnvKey = envEntry.getKey().substring(primeDataSecretPrefix.length());
         String[] carriedEnvValue = envEntry.getValue().split("\\.");
-        System.out.println(carriedEnvValue);
 
         EnvVarSource envVarSource = new EnvVarSource();
         envVarSource.setSecretKeyRef(new SecretKeySelector(carriedEnvValue[1], carriedEnvValue[0], false));
